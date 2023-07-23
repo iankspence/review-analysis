@@ -47,6 +47,7 @@ def main(input_csv: str, output_csv: str, overwrite: bool = False) -> None:
     nltk.download('stopwords')
     nltk.download('wordnet')
     nltk.download('punkt')
+    nltk.download('vader_lexicon')
 
     df = pd.read_csv(input_csv)
     df['Review_Text'] = df['Review_Text'].apply(lambda x: preprocess_text(x))

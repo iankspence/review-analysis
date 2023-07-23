@@ -8,7 +8,7 @@ import pandas as pd
 import seaborn as sns
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-from textblob import TextBlob
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 
 def preprocess_text(text: str) -> List[str]:
@@ -23,12 +23,17 @@ def preprocess_text(text: str) -> List[str]:
     return words
 
 
-def calculate_sentiment(text: str) -> float:
+def calculate_sentiment(text: str, analyzer: SentimentIntensityAnalyzer) -> float:
     """
-    Calculate sentiment polarity of a given text string.
+    Calculate sentiment polarity of a given text string using Vader.
     """
 
-    return TextBlob(text).sentiment.polarity
+    # TextBlob
+    # return TextBlob(text).sentiment.polarity
+
+    # Vader
+    sentiment_scores = analyzer.polarity_scores(text)
+    return sentiment_scores['compound']
 
 
 def calculate_word_counts(df: pd.DataFrame) -> pd.DataFrame:
@@ -98,8 +103,12 @@ def main(input_csv: str, heatmap_output_png: str, sentiment_output_png: str, ove
             sys.exit(f"Execution stopped. The output file '{sentiment_output_png}' already exists.")
 
     df = pd.read_csv(input_csv)
+    # df = df.iloc[:20]
+
     df['Processed_Review_Text'] = df['Review_Text'].apply(preprocess_text)
-    df['Sentiment'] = df['Review_Text'].apply(calculate_sentiment)
+
+    vader_analyzer = SentimentIntensityAnalyzer()
+    df['Sentiment'] = df['Review_Text'].apply(lambda text: calculate_sentiment(text, vader_analyzer))
 
     word_count_df = calculate_word_counts(df)
     plot_word_count_heatmap(word_count_df, heatmap_output_png)
@@ -108,9 +117,9 @@ def main(input_csv: str, heatmap_output_png: str, sentiment_output_png: str, ove
 
 if __name__ == '__main__':
 
-    input_csv = './output/word_count_analysis/csv/reviews_with_9_clusters.csv'
-    heatmap_output_png = './output/word_count_analysis/png/word_count_heatmap_9_clusters.png'
-    sentiment_output_png = './output/word_count_analysis/png/sentiment_boxplot_9_clusters.png'
+    input_csv = './output/word_count_analysis/csv/reviews_with_12_clusters.csv'
+    heatmap_output_png = './output/word_count_analysis/png/word_count_heatmap_12_clusters.png'
+    sentiment_output_png = './output/word_count_analysis/png/sentiment_boxplot_12_clusters_VADER.png'
     overwrite = False
 
     main(input_csv, heatmap_output_png, sentiment_output_png, overwrite)
