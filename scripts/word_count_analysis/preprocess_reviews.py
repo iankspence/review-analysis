@@ -50,13 +50,17 @@ def main(input_csv: str, output_csv: str, overwrite: bool = False) -> None:
     nltk.download('vader_lexicon')
 
     df = pd.read_csv(input_csv)
-    df['Review_Text'] = df['Review_Text'].apply(lambda x: preprocess_text(x))
+    df['Preprocessed_Review_Text'] = df['Review_Text'].apply(lambda x: preprocess_text(x))
     df.to_csv(output_csv, index=False)
 
 
 if __name__ == '__main__':
-    input_csv = './data/cleaned_reviews.csv'
-    output_csv = './output/word_count_analysis/csv/preprocessed_reviews.csv'
+    input_csv = './output/embedding_analysis/csv/review_embeddings_with_20_clusters_50_pca.csv'
+    output_csv = './output/embedding_analysis/csv/preprocessed_review_embeddings_with_20_clusters_50_pca.csv'
+
+    # input_csv = './data/cleaned_reviews.csv'
+    # output_csv = './output/word_count_analysis/csv/preprocessed_reviews.csv'
+
     overwrite = False
 
     main(input_csv, output_csv, overwrite)

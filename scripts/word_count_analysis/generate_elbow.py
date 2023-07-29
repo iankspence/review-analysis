@@ -53,7 +53,7 @@ def main(input_csv: str, cluster_counts: range, output_png: str, overwrite: bool
 
     vectorizer = TfidfVectorizer()
 
-    tfidf_matrix = vectorizer.fit_transform(df['Review_Text'].values.astype('U'))
+    tfidf_matrix = vectorizer.fit_transform(df['Preprocessed_Review_Text'].values.astype('U'))
 
     inertias = calculate_inertia(tfidf_matrix, cluster_counts)
     plot_elbow_curve(cluster_counts, inertias, output_png)

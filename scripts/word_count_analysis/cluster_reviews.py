@@ -11,7 +11,7 @@ def tfidf_clustering(tfidf_matrix: csr_matrix, num_clusters: int) -> pd.array:
     """
     Perform K-means clustering on a given TF-IDF matrix with a specific number of clusters.
 
-    TF-IDF (Term Frequency and Inverse Document Frequency) uses the frequency of words
+    TF-IDF (Term Frequency and Inverse Document Frequency) uses the relative frequency of words
     to determine how relevant those words are to a given document.
     """
 

@@ -6,21 +6,7 @@ from typing import List
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-
-
-def preprocess_text(text: str) -> List[str]:
-    """
-    Preprocess a given text string: tokenize, remove stopwords and punctuation,
-    and convert to lower case.
-    """
-
-    stop_words = set(stopwords.words('english'))
-    words = word_tokenize(text)
-    words = [word.lower() for word in words if word.isalpha() and word not in stop_words]
-    return words
 
 
 def calculate_sentiment(text: str, analyzer: SentimentIntensityAnalyzer) -> float:
@@ -44,7 +30,7 @@ def calculate_word_counts(df: pd.DataFrame) -> pd.DataFrame:
     word_count_data = {}
 
     for cluster in sorted(df['Cluster'].unique()):
-        all_reviews_in_cluster = [word for review in df[df['Cluster'] == cluster]['Processed_Review_Text'] for word in review]
+        all_reviews_in_cluster = [word for review in df[df['Cluster'] == cluster]['Preprocessed_Review_Text'] for word in review]
         word_counter_in_cluster = Counter(all_reviews_in_cluster)
         most_common_words = [word for word, _ in word_counter_in_cluster.most_common(10)]
         word_count_data[f'Cluster {cluster}'] = pd.Series(word_counter_in_cluster, index=most_common_words)
@@ -103,12 +89,9 @@ def main(input_csv: str, heatmap_output_png: str, sentiment_output_png: str, ove
             sys.exit(f"Execution stopped. The output file '{sentiment_output_png}' already exists.")
 
     df = pd.read_csv(input_csv)
-    # df = df.iloc[:20]
-
-    df['Processed_Review_Text'] = df['Review_Text'].apply(preprocess_text)
 
     vader_analyzer = SentimentIntensityAnalyzer()
-    df['Sentiment'] = df['Review_Text'].apply(lambda text: calculate_sentiment(text, vader_analyzer))
+    df['Sentiment'] = df['Preprocessed_Review_Text'].apply(lambda text: calculate_sentiment(text, vader_analyzer))
 
     word_count_df = calculate_word_counts(df)
     plot_word_count_heatmap(word_count_df, heatmap_output_png)
@@ -117,9 +100,9 @@ def main(input_csv: str, heatmap_output_png: str, sentiment_output_png: str, ove
 
 if __name__ == '__main__':
 
-    input_csv = './output/word_count_analysis/csv/reviews_with_12_clusters.csv'
-    heatmap_output_png = './output/word_count_analysis/png/word_count_heatmap_12_clusters.png'
-    sentiment_output_png = './output/word_count_analysis/png/sentiment_boxplot_12_clusters_VADER.png'
+    input_csv = './output/embedding_analysis/csv/preprocessed_review_embeddings_with_20_clusters_50_pca.csv'
+    heatmap_output_png = './output/embedding_analysis/png/word_count_heatmap_preprocessed_review_embeddings_with_20_clusters_50_pca.png'
+    sentiment_output_png = './output/embedding_analysis/png/sentiment_boxplot_preprocessed_review_embeddings_with_20_clusters_50_pca.png'
     overwrite = False
 
     main(input_csv, heatmap_output_png, sentiment_output_png, overwrite)
