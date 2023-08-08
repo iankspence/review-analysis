@@ -5,6 +5,7 @@ import time
 import pandas as pd
 import requests
 from tqdm import tqdm
+from dotenv import load_dotenv
 
 def get_embedding(text: str, api_key: str, model: str = 'text-embedding-ada-002') -> list:
     """
@@ -24,6 +25,7 @@ def get_embedding(text: str, api_key: str, model: str = 'text-embedding-ada-002'
     response.raise_for_status()
     return response.json()['data'][0]['embedding']
 
+
 def main(input_csv: str, output_csv: str, api_key: str, overwrite: bool = False) -> None:
     """
     Main function to load the raw reviews, get embeddings for each review,
@@ -33,24 +35,15 @@ def main(input_csv: str, output_csv: str, api_key: str, overwrite: bool = False)
     if not os.path.exists(input_csv):
         raise FileNotFoundError(f"The input file '{input_csv}' does not exist.")
 
-    if os.path.exists(output_csv):
-        should_proceed = input(f"The output file '{output_csv}' already exists. Do you want to overwrite it and start from scratch? (y/n): ")
-        if should_proceed.lower() != 'y':
-            df_out = pd.read_csv(output_csv)
-        else:
-            df_out = pd.read_csv(input_csv)
-            df_out['Anonymous_Embedding'] = None  # Initialize Embedding column
-    else:
-        df_out = pd.read_csv(input_csv)
-        df_out['Anonymous_Embedding'] = None  # Initialize Embedding column
+    df_out = pd.read_csv(input_csv)
 
     # Set up rate limiting
     RATE_LIMIT = 500  # Number of requests per minute
     start_time = time.time()
     request_count = 0
 
-    # Start from where we left off
     start_idx = df_out[df_out['Anonymous_Embedding'].notna()].shape[0]
+    total_reviews = df_out.shape[0]  # total number of rows
 
     for idx, review in enumerate(tqdm(df_out['Anonymized_Review_Text'][start_idx:], desc='Processing reviews'), start=start_idx):
         # Check rate limiting
@@ -68,12 +61,12 @@ def main(input_csv: str, output_csv: str, api_key: str, overwrite: bool = False)
         except requests.HTTPError as err:
             print(f"Failed to get embedding for review: {review}")
             print(f"Error: {err}")
-            df_out.loc[idx, 'Embedding'] = [0] * 1536  # Use a zero vector as a placeholder
+            df_out.loc[idx, 'Anonymous_Embedding'] = [0] * 1536  # Use a zero vector as a placeholder
 
         request_count += 1
 
-        # Save progress every 500 reviews
-        if idx % 500 == 0:
+        # Save progress every 500 reviews or after the last review
+        if (idx % 500 == 0) or (idx == total_reviews - 1):
             df_out.to_csv(output_csv, index=False)
             print(f'saving csv at idx: {idx}...')
 
@@ -82,13 +75,12 @@ def main(input_csv: str, output_csv: str, api_key: str, overwrite: bool = False)
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 4:
-        print("Usage: python generate_embeddings.py input.csv output.csv api_key")
-        sys.exit(1)
+    load_dotenv()
+    api_key = os.getenv('OPENAI_API_KEY')
 
-    input_csv = sys.argv[1]
-    output_csv = sys.argv[2]
-    api_key = sys.argv[3]
+    input_csv = '/Users/ianspence/Desktop/review-analysis/data/anonymized_reviews_qc6_23743_embeddings.csv'
+    output_csv = '/Users/ianspence/Desktop/review-analysis/data/anonymized_reviews_qc6_23743_embeddings.csv'
+
     overwrite = False
 
     print(f'input csv: {input_csv}')
